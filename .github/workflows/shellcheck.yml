@@ -1,8 +1,6 @@
 name: Check Shell Script
 
 on:
-  push:
-    branches: "*"
   pull_request:
     branches: "*"
 
@@ -17,4 +15,5 @@ jobs:
     - name: Check Misspell
       uses: docker://dragonflyoss/linter:v0.2.7
       with:
-        args: bash -c "find . -type f -name '*.sh' | grep -v vendor | xargs shellcheck"
+        args: bash -c "code=0;for shellFile in $(find . -type f -name '*.sh' | grep -v vendor); do shellcheck $shellFile; if [ $? -ne 0 ]; then code=1; fi;done; echo $code; exit $code"
+
