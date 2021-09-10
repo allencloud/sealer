@@ -8,24 +8,15 @@ on:
     paths:
       - '*.md'
 jobs:
-  lint-markdown-docs:
-    name: Lint markdown file
+  markdown-docs-link-check:
+    name: check links in markdown files
     runs-on: ubuntu-latest
     steps:
     - name: Check out code
       uses: actions/checkout@v2
 
-    - name: Lint markdown file
+    - name: check links in markdown files
       uses: docker://dragonflyoss/linter:v0.2.7
       with:
-        args: bash -c "set +e
-            for name in $(find . -name \*.md | grep -v vendor | grep -v CHANGELOG); do 
-              if [ -f $name ]; then 
-                markdown-link-check -q $name; 
-                if [ $? -ne 0 ]; then
-                  code=1
-                fi
-              fi 
-            done 
-            bash -c 'exit $code';"
+        args: bash -c "find ./ -name '*.md' | grep -v vendor | xargs markdown-link-check"
 
