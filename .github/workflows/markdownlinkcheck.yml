@@ -18,4 +18,14 @@ jobs:
     - name: Lint markdown file
       uses: docker://dragonflyoss/linter:v0.2.7
       with:
-        args: bash -c "find ./ -name '*.md' | grep -v vendor | xargs markdown-link-check -q"
+        args: bash -c "set +e
+            for name in $(find . -name \*.md | grep -v vendor | grep -v CHANGELOG); do 
+              if [ -f $name ]; then 
+                markdown-link-check -q $name; 
+                if [ $? -ne 0 ]; then
+                  code=1
+                fi
+              fi 
+            done 
+            bash -c 'exit $code';"
+
