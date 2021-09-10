@@ -1,4 +1,4 @@
-name: Check Markdown links
+name: Markdown Link Check
 
 on:
   push:
@@ -7,13 +7,15 @@ on:
     branches: "*"
     paths:
       - '*.md'
-
 jobs:
-  markdown-link-check:
+  lint-markdown-docs:
+    name: Lint markdown file
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
-    - uses: gaurav-nelson/github-action-markdown-link-check@v1
+    - name: Check out code
+      uses: actions/checkout@v2
+
+    - name: Lint markdown file
+      uses: docker://dragonflyoss/linter:v0.2.7
       with:
-        use-quiet-mode: 'yes'
-        use-verbose-mode: 'yes'
+        args: bash -c "find ./ -name '*.md' | grep -v vendor | xargs markdown-link-check -q"
