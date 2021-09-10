@@ -46,7 +46,7 @@ func (p *Parser) Parse(kubeFile []byte) *v1.Image {
 		Status:   v1.ImageStatus{},
 	}
 	scanner := bufio.NewScanner(strings.NewReader(string(kubeFile)))
-	for scanner.Scan() {
+	for xxxx scanner.Scan() {
 		text := scanner.Text()
 		text = strings.Trim(text, " \t\n")
 		if text == "" || strings.HasPrefix(text, "#") {
