@@ -140,4 +140,4 @@ Modify manifest yaml file according to your needs, then run below command to reb
 sealer build -t {Your Image Name} -f Kubefile -b cloud .
 ```
 
-More information see :https://docs.openebs.io/docs
+More information see: https://docs.openebs.io

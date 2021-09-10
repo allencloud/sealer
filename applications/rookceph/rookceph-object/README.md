@@ -23,7 +23,7 @@ CephObjectStore:
 
 Use default Clusterfile to apply the ceph cluster.
 
-see : [default ceph object store Clusterfile examples](/applications/rookceph/rookceph-object/examples/Clusterfile.yaml)
+see : [default ceph object store Clusterfile examples](../../../applications/rookceph/rookceph-object/examples/Clusterfile.yaml)
 
 # How to use it
 
