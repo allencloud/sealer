@@ -18,5 +18,5 @@ jobs:
     - name: check links in markdown files
       uses: docker://dragonflyoss/linter:v0.2.7
       with:
-        args: bash -c "find ./ -name '*.md' | grep -v vendor | xargs markdown-link-check"
+        args: bash -c "for mdFile in $(find ./ -name '*.md' | grep -v vendor); do markdown-link-check -q $mdFile; if [ $? -ne 0 ]; then code=1; fi;done;bash -c 'exit $code'"
 
