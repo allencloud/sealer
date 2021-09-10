@@ -18,4 +18,4 @@ jobs:
     - name: Lint markdown file
       uses: docker://dragonflyoss/linter:v0.2.7
       with:
-        args: find . -name '*.md' | xargs mdl
+        args: find . -name .md | xargs mdl
