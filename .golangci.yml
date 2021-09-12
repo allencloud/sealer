@@ -34,6 +34,34 @@ linters:
     - structcheck
     - unused
     - varcheck
+    - gocyclo
+    - gosec
+    - makezero
+    - nilerr
+    - nlreturn
+    - unconvert
+    - bodyclose
+    - cyclop
+    - dogsled
+    - funlen
+    - gochecknoinits
+    - goconst
+    - gocritic
+    - gomnd
+    - ifshort
+    - noctx
+    - whitespace
+    - wrapcheck
+    - godot
+    - godox
+    - nakedret
+    - nestif
+    - prealloc
+    - stylecheck
+    - testpackage
+    - unparam
+    - wastedassign
+    - wsl
 
 issues:
   exclude-rules:
