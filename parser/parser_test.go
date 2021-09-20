@@ -34,21 +34,21 @@ func Test_decodeLine(t *testing.T) {
 	}{
 		{
 			"test FROM command",
-			args{line: "FROM kubernetes:1.18.2"},
+			args{line: "FROM kubernetes:1.16.2"}, // without prefix and suffix whitespace
 			"FROM",
-			"kubernetes:1.18.2",
+			"kubernetes:1.16.2",
 			false,
 		},
 		{
 			"test FROM command",
-			args{line: " FROM kubernetes:1.18.2"},
+			args{line: " FROM kubernetes:1.17.2"}, // with a prefix whitespace
 			"FROM",
-			"kubernetes:1.18.2",
+			"kubernetes:1.17.2",
 			false,
 		},
 		{
 			"test FROM command",
-			args{line: "FROM kubernetes:1.18.2 "},
+			args{line: "FROM kubernetes:1.18.2 "}, // with a suffix whitespace
 			"FROM",
 			"kubernetes:1.18.2",
 			false,
