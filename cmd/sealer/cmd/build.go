@@ -42,6 +42,7 @@ var buildCmd = &cobra.Command{
 	Use:   "build [flags] PATH",
 	Short: "build a ClusterImage from a Kubefile",
 	Long: `build command is used to build a ClusterImage from specified Kubefile.
+	test command labler
 It organizes the specified Kubefile and input building context, and builds
 a brand new ClusterImage.`,
 	Args: cobra.ExactArgs(1),

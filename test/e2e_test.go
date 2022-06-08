@@ -29,6 +29,7 @@ import (
 	"github.com/sealerio/sealer/test/testhelper/settings"
 )
 
+//  test labeler
 func TestSealerTests(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "run sealer suite")
