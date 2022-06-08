@@ -37,7 +37,7 @@ type BuildFlag struct {
 
 var buildConfig *BuildFlag
 
-// buildCmd represents the build command
+// buildCmd xxxxxxxx represents the build command
 var buildCmd = &cobra.Command{
 	Use:   "build [flags] PATH",
 	Short: "build a ClusterImage from a Kubefile",
