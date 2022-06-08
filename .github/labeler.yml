@@ -1,0 +1,17 @@
+# Add 'e2e-test' label to any change to e2e-test files within the source dir
+e2e-test:
+- any: ['e2e-test']
+
+# Add 'source' label to any change to src files within the source dir EXCEPT for the docs sub-folder
+command:
+- any: ['cmd/**/*']
+
+# Add 'source' label to any change to src files within the source dir EXCEPT for the docs sub-folder
+area/doc:
+- any: ['docs/**/*']
+
+faq:
+- 'FAQ.md'
+
+test:
+- any: ["test/**/*"]
