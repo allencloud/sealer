@@ -60,7 +60,7 @@ func Login(ctx context.Context, authConfig *types.AuthConfig) error {
 	}
 
 	endpointStr := strings.TrimRight(endpointURL.String(), "/") + "/v2/"
-	req, err := http.NewRequest("GET", endpointStr, nil)
+	req, err := http.NewRequestWithContext(ctx, "GET", endpointStr, nil)
 	if err != nil {
 		return err
 	}

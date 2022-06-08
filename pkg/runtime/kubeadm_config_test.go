@@ -350,7 +350,7 @@ func TestKubeadmConfig_LoadFromClusterfile(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			k := tt.fields.KubeConfig
 			testfile := "test-Clusterfile"
-			err := ioutil.WriteFile(testfile, tt.args.kubeadmconfig, 0644)
+			err := ioutil.WriteFile(testfile, tt.args.kubeadmconfig, 0600)
 			if err != nil {
 				t.Errorf("WriteFile %s error = %v, wantErr %v", testfile, err, tt.wantErr)
 			}
@@ -410,7 +410,7 @@ func TestKubeadmConfig_Merge(t *testing.T) {
 							return
 						}*/
 			testfile := "test-kubeadm.yml"
-			err := ioutil.WriteFile(testfile, tt.args.defaultKubeadmConfig, 0644)
+			err := ioutil.WriteFile(testfile, tt.args.defaultKubeadmConfig, 0600)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("WriteFile %s error = %v, wantErr %v", testfile, err, tt.wantErr)
 				return
