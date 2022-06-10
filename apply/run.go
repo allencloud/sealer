@@ -15,6 +15,7 @@
 package apply
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -44,20 +45,53 @@ func PreProcessIPList(joinArgs *Args) error {
 	return nil
 }
 
-func (c *ClusterArgs) SetClusterArgs() error {
-	c.cluster.APIVersion = common.APIVersion
-	c.cluster.Kind = common.Cluster
-	c.cluster.Name = c.runArgs.ClusterName
-	c.cluster.Spec.Image = c.imageName
-	c.cluster.Spec.SSH.User = c.runArgs.User
-	c.cluster.Spec.SSH.Pk = c.runArgs.Pk
-	c.cluster.Spec.SSH.PkPasswd = c.runArgs.PkPassword
-	c.cluster.Spec.SSH.Port = strconv.Itoa(int(c.runArgs.Port))
-	c.cluster.Spec.Env = append(c.cluster.Spec.Env, c.runArgs.CustomEnv...)
-	c.cluster.Spec.CMDArgs = append(c.cluster.Spec.CMDArgs, c.runArgs.CMDArgs...)
-	if c.runArgs.Password != "" {
-		c.cluster.Spec.SSH.Passwd = c.runArgs.Password
+func ConstructClusterFromArg(runArgs *Args) *v2.Cluster {
+	hosts := []v2.Host{}
+	if net.IsIPList(runArgs.Masters) && (net.IsIPList(runArgs.Nodes) || runArgs.Nodes == "") {
+		masters := strings.Split(runArgs.Masters, ",")
+		nodes := strings.Split(runArgs.Nodes, ",")
+		c.hosts = []v2.Host{}
+		hosts := getHostsWithIpsPort(masters, runArgs.Port, common.MASTER)
+		if len(nodes) != 0 {
+			c.setHostWithIpsPort(nodes, runArgs.Port, common.NODE)
+		}
+		hosts = c.hosts
+	} else if ip, err := net.GetLocalDefaultIP(); err != nil {
+		return err
+	} else {
+		hosts = []v2.Host{
+			{
+				IPS:   []string{ip},
+				Roles: []string{common.MASTER},
+			},
+		}
 	}
+
+	cluster := v2.Cluster{
+		APIVersion: common.APIVersion,
+		Kind:       common.Cluster,
+		Name:       runArgs.ClusterName,
+		Spec: v2.ClusterSpec{
+			SSH: v1.SSH{
+				User:     runArgs.User,
+				PkPasswd: runArgs.PkPassword,
+				Pk:       runArgs.Pk,
+				Port:     strconv.Itoa(int(runArgs.Port)),
+			},
+			Hosts:   hosts,
+			Env:     runArgs.CustomEnv,
+			CMDArgs: runArgs.CMDArgs,
+		},
+	}
+
+	if runArgs.Password != "" {
+		cluster.Spec.SSH.Passwd = runArgs.Password
+	}
+
+	return &cluster
+}
+
+func (c *ClusterArgs) SetClusterArgs() error {
 	err := PreProcessIPList(c.runArgs)
 	if err != nil {
 		return err
@@ -86,31 +120,38 @@ func (c *ClusterArgs) SetClusterArgs() error {
 	return err
 }
 
-func (c *ClusterArgs) setHostWithIpsPort(ips []string, role string) {
+func getHostsWithIpsPort(ips []string, port uint16, role string) []v2.Host {
 	//map[ssh port]*host
 	hostMap := map[string]*v2.Host{}
 	for i := range ips {
-		ip, port := net.GetHostIPAndPortOrDefault(ips[i], strconv.Itoa(int(c.runArgs.Port)))
+		ip, port := net.GetHostIPAndPortOrDefault(ips[i], strconv.Itoa(int(port)))
 		if _, ok := hostMap[port]; !ok {
 			hostMap[port] = &v2.Host{IPS: []string{ip}, Roles: []string{role}, SSH: v1.SSH{Port: port}}
 			continue
 		}
 		hostMap[port].IPS = append(hostMap[port].IPS, ip)
 	}
-	_, master0Port := net.GetHostIPAndPortOrDefault(ips[0], strconv.Itoa(int(c.runArgs.Port)))
+
+	hostsResult := []v2.Host{}
+	_, master0Port := net.GetHostIPAndPortOrDefault(ips[0], strconv.Itoa(int(port)))
 	for port, host := range hostMap {
 		host.IPS = removeIPListDuplicatesAndEmpty(host.IPS)
 		if port == master0Port && role == common.MASTER {
-			c.hosts = append([]v2.Host{*host}, c.hosts...)
+			hostsResult = append([]v2.Host{*host}, hostsResult...)
 			continue
 		}
-		c.hosts = append(c.hosts, *host)
+		hostsResult = append(hostsResult, *host)
 	}
+	return hostsResult
 }
 
 func NewApplierFromArgs(imageName string, runArgs *Args) (applydriver.Interface, error) {
+	if err := validateArgs(runArgs); err != nil {
+		return nil, fmt.Errorf("failed to validate input args: %v", err)
+	}
+	cluster := ConstructClusterFromArg(runArgs)
 	c := &ClusterArgs{
-		cluster:   &v2.Cluster{},
+		cluster:   cluster,
 		imageName: imageName,
 		runArgs:   runArgs,
 	}
@@ -118,4 +159,10 @@ func NewApplierFromArgs(imageName string, runArgs *Args) (applydriver.Interface,
 		return nil, err
 	}
 	return NewApplier(c.cluster)
+}
+
+// validateArgs validates all the input args from sealer run command.
+func validateArgs(runArgs *Args) error {
+	// TODO: add detailed validation steps.
+	return nil
 }

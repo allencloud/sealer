@@ -34,6 +34,7 @@ func GetHostIP(host string) string {
 	return strings.Split(host, ":")[0]
 }
 
+//
 func GetHostIPAndPortOrDefault(host, Default string) (string, string) {
 	if !strings.ContainsRune(host, ':') {
 		return host, Default
