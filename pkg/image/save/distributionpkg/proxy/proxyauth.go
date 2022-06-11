@@ -76,18 +76,21 @@ func getAuthURLs(remoteURL string) ([]string, error) {
 	authURLs := []string{}
 
 	resp, err := http.Get(remoteURL + "/v2/")
+	if err == nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		if strings.Contains(err.Error(), certUnknown) {
 			logrus.Warnf("create connect with unauthenticated registry url: %s", remoteURL)
-			resp, err = newClientSkipVerify().Get(remoteURL + "/v2/")
+			resp, err := newClientSkipVerify().Get(remoteURL + "/v2/")
 			if err != nil {
 				return nil, err
 			}
+			defer resp.Body.Close()
 		} else {
 			return nil, err
 		}
 	}
-	defer resp.Body.Close()
 
 	for _, c := range challenge.ResponseChallenges(resp) {
 		if strings.EqualFold(c.Scheme, "bearer") {
@@ -101,6 +104,10 @@ func getAuthURLs(remoteURL string) ([]string, error) {
 // #nosec
 func ping(manager challenge.Manager, endpoint string) error {
 	resp, err := http.Get(endpoint)
+	if err == nil {
+		defer resp.Body.Close()
+	}
+
 	if err != nil {
 		if strings.Contains(err.Error(), certUnknown) {
 			resp, err = newClientSkipVerify().Get(endpoint)
@@ -111,7 +118,6 @@ func ping(manager challenge.Manager, endpoint string) error {
 			return err
 		}
 	}
-	defer resp.Body.Close()
 
 	return manager.AddResponse(resp)
 }

@@ -38,6 +38,14 @@ linters:
     - unparam
     - ifshort
     - unconvert
+    - predeclared
+    - gosec
+    - forcetypeassert
+    - bodyclose
+    - containedctx
+    - exportloopref
+    - nosprintfhostport
+    - noctx
 
 issues:
   exclude-rules:
@@ -49,4 +57,4 @@ issues:
 # https://github.com/golangci/golangci/wiki/Configuration
 service:
   # use the fixed version to not introduce new linters unexpectedly
-  golangci-lint-version: 1.39.0
+  golangci-lint-version: 1.43.0

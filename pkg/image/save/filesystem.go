@@ -194,7 +194,7 @@ func (d *driver) Reader(ctx context.Context, path string, offset int64) (io.Read
 	return file, nil
 }
 
-func (d *driver) Writer(ctx context.Context, subPath string, append bool) (storagedriver.FileWriter, error) {
+func (d *driver) Writer(ctx context.Context, subPath string, appendable bool) (storagedriver.FileWriter, error) {
 	fullPath := d.fullPath(subPath)
 	parentDir := path.Dir(fullPath)
 	if err := os.MkdirAll(parentDir, 0750); err != nil {
@@ -208,7 +208,7 @@ func (d *driver) Writer(ctx context.Context, subPath string, append bool) (stora
 
 	var offset int64
 
-	if !append {
+	if !appendable {
 		err := fp.Truncate(0)
 		if err != nil {
 			return nil, fp.Close()

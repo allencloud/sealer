@@ -181,19 +181,19 @@ func ConvertToMap(env []string) map[string]string {
 	return envs
 }
 
-func Diff(old, new []string) (add, sub []string) {
+func Diff(olds, news []string) (add, sub []string) {
 	diffMap := make(map[string]bool)
-	for _, v := range old {
+	for _, v := range olds {
 		diffMap[v] = true
 	}
-	for _, v := range new {
+	for _, v := range news {
 		if !diffMap[v] {
 			add = append(add, v)
 		} else {
 			diffMap[v] = false
 		}
 	}
-	for _, v := range old {
+	for _, v := range olds {
 		if diffMap[v] {
 			sub = append(sub, v)
 		}
