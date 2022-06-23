@@ -24,10 +24,10 @@ import (
 
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/sealerio/sealer/common"
 	v1 "github.com/sealerio/sealer/types/api/v1"
 	strUtils "github.com/sealerio/sealer/utils/strings"
 	"github.com/sealerio/sealer/version"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -61,6 +61,7 @@ func NewParse() Interface {
 	return &Parser{}
 }
 
+// Parse parses the input Kubefile content and constructs a v1.Image instance.
 func (p *Parser) Parse(kubeFile []byte) (*v1.Image, error) {
 	image := &v1.Image{
 		TypeMeta: metaV1.TypeMeta{APIVersion: "", Kind: "Image"},
@@ -106,18 +107,26 @@ func (p *Parser) Parse(kubeFile []byte) (*v1.Image, error) {
 
 		layerType, layerValue, err := decodeLine(line)
 		if err != nil {
-			return nil, fmt.Errorf("decode kubeFile line failed, line: %d ,err: %v", currentLine, err)
+			return nil, fmt.Errorf("failed to parse line %d in Kubefile: %v", currentLine, err)
 		}
 
 		switch layerType {
 		case Arg:
-			dispatchArg(layerValue, image)
+			if err := dispatchArg(layerValue, image); err != nil {
+				return nil, err
+			}
 		case Cmd:
 			dispatchCmd(layerValue, image)
 		default:
 			dispatchDefault(layerType, layerValue, image)
 		}
 	}
+
+	layer0 := image.Spec.Layers[0]
+	if layer0.Type != common.FROMCOMMAND {
+		return nil, fmt.Errorf("first line of kubefile must start with %s", common.FROMCOMMAND)
+	}
+
 	return image, nil
 }
 
@@ -134,34 +143,33 @@ func decodeLine(line string) (string, string, error) {
 	return cmd, cmdline[1], nil
 }
 
-func dispatchArg(layerValue string, ima *v1.Image) {
+func dispatchArg(argValue string, ima *v1.Image) error {
 	if ima.Spec.ImageConfig.Args.Current == nil {
 		ima.Spec.ImageConfig.Args.Current = map[string]string{}
 	}
 
-	kv := strings.Split(layerValue, ",")
+	kv := strings.Split(argValue, ",")
 	for _, element := range kv {
 		valueLine := strings.SplitN(element, "=", 2)
 		if len(valueLine) != 2 {
-			logrus.Errorf("invalid ARG value %s. ARG format must be key=value", layerValue)
-			return
+			return fmt.Errorf("invalid ARG(%s): ARG format must be key=value", argValue)
 		}
 		k := strings.TrimSpace(valueLine[0])
 		if !strUtils.IsLetterOrNumber(k) {
-			logrus.Errorf("ARG key must be letter or number,invalid ARG format will ignore this key %s.", k)
-			return
+			return fmt.Errorf("ARG key must be letter or number, invalid ARG format will ignore this key %s", k)
 		}
 		ima.Spec.ImageConfig.Args.Current[k] = strings.TrimSpace(valueLine[1])
 	}
+	return nil
 }
 
-func dispatchCmd(layerValue string, ima *v1.Image) {
+func dispatchCmd(cmdValue string, ima *v1.Image) {
 	if ima.Spec.ImageConfig.Cmd.Current == nil {
 		ima.Spec.ImageConfig.Cmd.Current = make([]string, 0)
 	}
 
 	var cmdList []string
-	for _, value := range strings.Split(layerValue, ",") {
+	for _, value := range strings.Split(cmdValue, ",") {
 		if value == "" {
 			continue
 		}

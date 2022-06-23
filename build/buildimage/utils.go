@@ -43,17 +43,7 @@ func initImageSpec(kubefile string) (*v1.Image, error) {
 		return nil, fmt.Errorf("failed to load kubefile: %v", err)
 	}
 
-	rawImage, err := parser.NewParse().Parse(kubeFile)
-	if err != nil {
-		return nil, err
-	}
-
-	layer0 := rawImage.Spec.Layers[0]
-	if layer0.Type != common.FROMCOMMAND {
-		return nil, fmt.Errorf("first line of kubefile must start with %s", common.FROMCOMMAND)
-	}
-
-	return rawImage, nil
+	return parser.NewParse().Parse(kubeFile)
 }
 
 func setClusterFileToImage(cluster *v2.Cluster, image *v1.Image) error {
