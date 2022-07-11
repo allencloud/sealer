@@ -23,12 +23,12 @@ arch=$2
 echo "arch: $arch"
 wget http://sealer.oss-cn-beijing.aliyuncs.com/auto-build/rootfs.tar.gz
 tar -xvf rootfs.tar.gz
-wget https://dl.k8s.io/$version/kubernetes-server-linux-$arch.tar.gz
+wget https://dl.k8s.io/"$version"/kubernetes-server-linux-"$arch".tar.gz
 tar -xvf kubernetes-server-linux-$arch.tar.gz
 sudo cp ./kubernetes/server/bin/kubectl ./rootfs/bin/
 sudo cp ./kubernetes/server/bin/kubeadm ./rootfs/bin/
 sudo cp ./kubernetes/server/bin/kubelet ./rootfs/bin/
-wget https://dl.k8s.io/$version/kubernetes-server-linux-amd64.tar.gz
+wget https://dl.k8s.io/"$version"/kubernetes-server-linux-amd64.tar.gz
 tar -xvf kubernetes-server-linux-amd64.tar.gz
 wget http://sealer.oss-cn-beijing.aliyuncs.com/auto-build/sealer.tar.gz
 sudo tar -xvf sealer.tar.gz -C /usr/bin
@@ -36,5 +36,5 @@ sudo sed -i "s/v1.20.14/$version/g" ./rootfs/etc/kubeadm.yml
 sudo sed -i "s/v1.20.14/$version/g" ./rootfs/Metadata
 sudo sed -i "s/amd64/$arch/g" ./rootfs/Metadata
 sudo ./kubernetes/server/bin/kubeadm config images list --config ./rootfs/etc/kubeadm.yml 2>/dev/null>>./rootfs/imageList
-cd ./rootfs
-sudo sealer build -f Kubefile -m lite -t kubernetes:$version .
+cd ./rootfs || exit
+sudo sealer build -f Kubefile -m lite -t kubernetes:"$version" .

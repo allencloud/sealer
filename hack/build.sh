@@ -41,7 +41,7 @@ get_version_vars() {
   if [[ $GIT_TAG ]]; then
     GIT_VERSION=$GIT_TAG
   fi
-  GIT_COMMIT=`git rev-parse --short HEAD || true`
+  GIT_COMMIT=$(git rev-parse --short HEAD || true)
   if [[ -z $GIT_COMMIT ]]; then
     GIT_COMMIT="0.0.0"
   fi
@@ -95,28 +95,28 @@ build_binaries() {
   get_version_vars
   goldflags="${GOLDFLAGS=-s -w} $(ldflags)"
   osarch=${1-}_${2-}
-  mkdir -p $THIS_PLATFORM_ASSETS
+  mkdir -p "$THIS_PLATFORM_ASSETS"
   tarFile="${GIT_VERSION}-${1-}-${2-}.tar.gz"
 
   debug "!!! build $osarch sealer"
-  GOOS=${1-} GOARCH=${2-} go build -o $THIS_PLATFORM_BIN/sealer/$osarch/sealer -mod vendor -ldflags "$goldflags"  $SEALER_ROOT/cmd/sealer/main.go
+  GOOS=${1-} GOARCH=${2-} go build -o "$THIS_PLATFORM_BIN"/sealer/"$osarch"/sealer -mod vendor -ldflags "$goldflags"  "$SEALER_ROOT"/cmd/sealer/main.go
   check $? "build $osarch sealer"
   debug "output bin: $THIS_PLATFORM_BIN/sealer/$osarch/sealer"
-  cd ${SEALER_ROOT}/_output/bin/sealer/$osarch/
-  tar czf sealer-$tarFile sealer
-  sha256sum sealer-$tarFile > sealer-$tarFile.sha256sum
-  mv *.tar.gz*  $THIS_PLATFORM_ASSETS/
+  cd "${SEALER_ROOT}"/_output/bin/sealer/"$osarch"/ || exit
+  tar czf sealer-"$tarFile" sealer
+  sha256sum sealer-"$tarFile" > sealer-"$tarFile".sha256sum
+  mv *.tar.gz*  "$THIS_PLATFORM_ASSETS"/
   debug "output tar.gz: $THIS_PLATFORM_ASSETS/sealer-$tarFile"
   debug "output sha256sum: $THIS_PLATFORM_ASSETS/sealer-$tarFile.sha256sum"
 
   debug "!!! build $osarch seautil"
-  GOOS=${1-} GOARCH=${2-} go build -o $THIS_PLATFORM_BIN/seautil/$osarch/seautil -mod vendor -ldflags "$goldflags"  $SEALER_ROOT/cmd/seautil/main.go
+  GOOS=${1-} GOARCH=${2-} go build -o "$THIS_PLATFORM_BIN"/seautil/"$osarch"/seautil -mod vendor -ldflags "$goldflags"  "$SEALER_ROOT"/cmd/seautil/main.go
   check $? "build $osarch seautil"
   debug "output bin: $THIS_PLATFORM_BIN/seautil/$osarch/seautil"
-  cd ${SEALER_ROOT}/_output/bin/seautil/$osarch/
-  tar czf seautil-$tarFile seautil
-  sha256sum seautil-$tarFile >  seautil-$tarFile.sha256sum
-  mv *.tar.gz*  $THIS_PLATFORM_ASSETS/
+  cd "${SEALER_ROOT}"/_output/bin/seautil/"$osarch"/ || exit
+  tar czf seautil-"$tarFile" seautil
+  sha256sum seautil-"$tarFile" >  seautil-"$tarFile".sha256sum
+  mv *.tar.gz*  "$THIS_PLATFORM_ASSETS"/
   debug "output tar.gz: $THIS_PLATFORM_ASSETS/seautil-$tarFile"
   debug "output sha256sum: $THIS_PLATFORM_ASSETS/seautil-$tarFile.sha256sum"
 
@@ -130,9 +130,9 @@ if [[ $MULTI_PLATFORM_BUILD ]]; then
    for platform in "${SEALER_SUPPORTED_PLATFORMS[@]}"; do
      OS=${platform%/*}
      ARCH=${platform##*/}
-     build_binaries $OS $ARCH
+     build_binaries "$OS" "$ARCH"
    done;
 else
-  build_binaries `go env GOOS` `go env GOARCH`
+  build_binaries "$(go env GOOS)" "$(go env GOARCH)"
 fi
 
