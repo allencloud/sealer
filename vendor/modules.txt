@@ -96,7 +96,14 @@ github.com/aliyun/alibaba-cloud-sdk-go/services/vpc
 # github.com/beorn7/perks v1.0.1
 ## explicit; go 1.11
 github.com/beorn7/perks/quantile
+<<<<<<< HEAD
 # github.com/blang/semver v3.5.1+incompatible
+=======
+# github.com/bramvdbogaerde/go-scp v1.2.0
+## explicit
+github.com/bramvdbogaerde/go-scp
+# github.com/cavaliergopher/grab/v3 v3.0.1
+>>>>>>> add HostPool to take over nodes management
 ## explicit
 github.com/blang/semver
 # github.com/cavaliergopher/grab/v3 v3.0.1

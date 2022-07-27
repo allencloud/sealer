@@ -160,7 +160,7 @@ func (k *Runtime) deleteNode(node net.IP) error {
 	if err != nil || !utilsnet.IsLocalIP(node, address) {
 		remoteCleanCmds = append(remoteCleanCmds, RemoveKubeConfig)
 	} else {
-		apiServerHost := getAPIServerHost(k.cluster.GetMaster0IP(), k.getAPIServerDomain())
+		apiServerHost := getAPIServerHost(k.master0, k.getAPIServerDomain())
 		remoteCleanCmds = append(remoteCleanCmds, fmt.Sprintf(RemoteAddEtcHosts, apiServerHost, apiServerHost))
 	}
 	if err := ssh.CmdAsync(node, remoteCleanCmds...); err != nil {
@@ -168,15 +168,15 @@ func (k *Runtime) deleteNode(node net.IP) error {
 	}
 	//remove node
 	if len(k.cluster.GetMasterIPList()) > 0 {
-		hostname, err := k.isHostName(k.cluster.GetMaster0IP(), node)
+		hostname, err := k.isHostName(k.master0, node)
 		if err != nil {
 			return err
 		}
-		ssh, err := k.getHostSSHClient(k.cluster.GetMaster0IP())
+		ssh, err := k.getHostSSHClient(k.master0)
 		if err != nil {
-			return fmt.Errorf("failed to get master0 ssh client(%s): %v", k.cluster.GetMaster0IP(), err)
+			return fmt.Errorf("failed to get master0 ssh client(%s): %v", k.master0, err)
 		}
-		if err := ssh.CmdAsync(k.cluster.GetMaster0IP(), fmt.Sprintf(KubeDeleteNode, strings.TrimSpace(hostname))); err != nil {
+		if err := ssh.CmdAsync(k.master0, fmt.Sprintf(KubeDeleteNode, strings.TrimSpace(hostname))); err != nil {
 			return fmt.Errorf("failed to delete node %s: %v", hostname, err)
 		}
 	}

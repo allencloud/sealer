@@ -17,25 +17,25 @@ package kubernetes
 import (
 	"context"
 	"fmt"
-	"strings"
-	"sync"
-
-	"github.com/sealerio/sealer/pkg/registry"
-	"github.com/sealerio/sealer/pkg/runtime/kubernetes/kubeadm"
-	"github.com/sealerio/sealer/utils"
-	versionUtils "github.com/sealerio/sealer/utils/version"
-
 	"net"
 	"path/filepath"
+	"strconv"
+	"strings"
+	"sync"
 	"time"
 
 	"github.com/sealerio/sealer/common"
+	"github.com/sealerio/sealer/pkg/hostpool"
+	"github.com/sealerio/sealer/pkg/registry"
 	"github.com/sealerio/sealer/pkg/runtime"
+	"github.com/sealerio/sealer/pkg/runtime/kubernetes/kubeadm"
 	"github.com/sealerio/sealer/pkg/runtime/kubernetes/kubeadm/v1beta2"
 	v2 "github.com/sealerio/sealer/types/api/v2"
+	"github.com/sealerio/sealer/utils"
 	"github.com/sealerio/sealer/utils/platform"
 	"github.com/sealerio/sealer/utils/ssh"
 	strUtils "github.com/sealerio/sealer/utils/strings"
+	versionUtils "github.com/sealerio/sealer/utils/version"
 
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
@@ -52,12 +52,15 @@ type Config struct {
 	APIServerDomain       string
 }
 
-//Runtime struct is the runtime interface for kubernetes
+// Runtime struct is the runtime interface for kubernetes.
+// In sealer's runtime of Kubernetes, it should carries
 type Runtime struct {
 	*sync.Mutex
-	cluster *v2.Cluster
+	hostPool *hostpool.HostPool
 	*kubeadm.KubeadmConfig
 	*Config
+
+	master0 net.IP
 }
 
 // NewDefaultRuntime arg "clusterfileKubeConfig" is the Clusterfile path/name, runtime need read kubeadm config from it
@@ -67,27 +70,45 @@ func NewDefaultRuntime(cluster *v2.Cluster, clusterfileKubeConfig *kubeadm.Kubea
 }
 
 func newKubernetesRuntime(cluster *v2.Cluster, clusterFileKubeConfig *kubeadm.KubeadmConfig) (runtime.Interface, error) {
+	var vlog int
+	if logrus.GetLevel() == logrus.DebugLevel {
+		vlog = 6
+	}
+
+	port, _ := strconv.Atoi(cluster.Spec.SSH.Port)
+	var hostConfigs []*hostpool.HostConfig
+	for _, value := range cluster.Spec.Hosts {
+		hostConfigs = append(hostConfigs, &hostpool.HostConfig{
+			IP:        value.IPS[0],
+			Port:      port,
+			User:      cluster.Spec.SSH.User,
+			Password:  cluster.Spec.SSH.Passwd,
+			Encrypted: cluster.Spec.SSH.Encrypted,
+		})
+	}
+
+	hostPool, err := hostpool.New(hostConfigs)
+	if err != nil {
+		return nil, err
+	}
+
 	k := &Runtime{
-		cluster: cluster,
+		master0:  cluster.GetMaster0IP(),
+		hostPool: hostPool,
 		Config: &Config{
 			ClusterFileKubeConfig: clusterFileKubeConfig,
 			APIServerDomain:       DefaultAPIserverDomain,
+			Vlog:                  vlog,
 		},
 		KubeadmConfig: &kubeadm.KubeadmConfig{},
 	}
-	k.Config.RegConfig = registry.GetConfig(k.getImageMountDir(), k.cluster.GetMaster0IP())
+
+	k.Config.RegConfig = registry.GetConfig(k.getImageMountDir(), k.master0)
 	k.setCertSANS(append(
 		[]string{"127.0.0.1", k.getAPIServerDomain(), k.getVIP().String()},
 		k.cluster.GetMasterIPStrList()...),
 	)
-	// TODO args pre checks
-	if err := k.checkList(); err != nil {
-		return nil, err
-	}
 
-	if logrus.GetLevel() == logrus.DebugLevel {
-		k.Vlog = 6
-	}
 	return k, nil
 }
 
@@ -156,6 +177,7 @@ func (k *Runtime) GetClusterMetadata() (*runtime.Metadata, error) {
 	return k.getClusterMetadata()
 }
 
+<<<<<<< HEAD
 func (k *Runtime) checkList() error {
 	if len(k.cluster.Spec.Hosts) == 0 {
 		return fmt.Errorf("master hosts cannot be empty")
@@ -164,6 +186,10 @@ func (k *Runtime) checkList() error {
 		return fmt.Errorf("master hosts ip cannot be empty")
 	}
 	return nil
+=======
+func (k *Runtime) UpdateCert(certs []string) error {
+	return k.updateCert(certs)
+>>>>>>> add HostPool to take over nodes management
 }
 
 func (k *Runtime) getClusterMetadata() (*runtime.Metadata, error) {

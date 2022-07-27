@@ -59,13 +59,13 @@ func (k *Runtime) ApplyRegistry() error {
 	if err = ssh.CmdAsync(k.RegConfig.IP, initRegistry); err != nil {
 		return err
 	}
-	if err = ssh.CmdAsync(k.cluster.GetMaster0IP(), addRegistryHosts); err != nil {
+	if err = ssh.CmdAsync(k.master0, addRegistryHosts); err != nil {
 		return err
 	}
 	if k.RegConfig.Username == "" || k.RegConfig.Password == "" {
 		return nil
 	}
-	return ssh.CmdAsync(k.cluster.GetMaster0IP(), k.GenLoginCommand())
+	return ssh.CmdAsync(k.master0, k.GenLoginCommand())
 }
 
 func (k *Runtime) GenLoginCommand() string {

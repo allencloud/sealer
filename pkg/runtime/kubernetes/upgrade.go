@@ -37,7 +37,7 @@ func (k *Runtime) upgrade() error {
 	var err error
 	binPath := filepath.Join(k.getRootfs(), `bin`)
 
-	err = k.upgradeFirstMaster(k.cluster.GetMaster0IP(), binPath, k.getKubeVersion())
+	err = k.upgradeFirstMaster(k.master0, binPath, k.getKubeVersion())
 	if err != nil {
 		return err
 	}

@@ -34,6 +34,11 @@ import (
 	"github.com/sealerio/sealer/utils/yaml"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
+<<<<<<< HEAD
+=======
+
+	"github.com/pkg/errors"
+>>>>>>> add HostPool to take over nodes management
 )
 
 const (
@@ -114,7 +119,7 @@ func getAPIServerHost(ipAddr net.IP, APIServer string) (host string) {
 }
 
 func (k *Runtime) JoinMasterCommands(master net.IP, joinCmd, hostname string) []string {
-	apiServerHost := getAPIServerHost(k.cluster.GetMaster0IP(), k.getAPIServerDomain())
+	apiServerHost := getAPIServerHost(k.master0, k.getAPIServerDomain())
 	cmdAddRegistryHosts := k.addRegistryDomainToHosts()
 	certCMD := runtime.RemoteCerts(k.getCertSANS(), master, hostname, k.getSvcCIDR(), "")
 	cmdAddHosts := fmt.Sprintf(RemoteAddEtcHosts, apiServerHost, apiServerHost)
@@ -210,7 +215,7 @@ func (k *Runtime) joinMasterConfig(masterIP net.IP) ([]byte, error) {
 	k.Lock()
 	defer k.Unlock()
 	// TODO Using join file instead template
-	k.setAPIServerEndpoint(fmt.Sprintf("%s:6443", k.cluster.GetMaster0IP()))
+	k.setAPIServerEndpoint(fmt.Sprintf("%s:6443", k.master0))
 	k.setJoinAdvertiseAddress(masterIP)
 	cGroupDriver, err := k.getCgroupDriverFromShell(masterIP)
 	if err != nil {
@@ -222,7 +227,6 @@ func (k *Runtime) joinMasterConfig(masterIP net.IP) ([]byte, error) {
 
 // sendJoinCPConfig send join CP nodes configuration
 func (k *Runtime) sendJoinCPConfig(joinMaster []net.IP) error {
-	k.Mutex = &sync.Mutex{}
 	eg, _ := errgroup.WithContext(context.Background())
 	for _, master := range joinMaster {
 		ip := master
@@ -274,7 +278,7 @@ func (k *Runtime) Command(version string, name CommandType) (cmd string) {
 	// "kubeadm config migrate" command of kubeadm v1.15.x, so v1.14 not support multi network interface.
 	cmds := map[CommandType]string{
 		InitMaster: fmt.Sprintf(InitMaster115Lower, k.getRootfs()),
-		JoinMaster: fmt.Sprintf(JoinMaster115Lower, k.cluster.GetMaster0IP(), k.getJoinToken(), k.getTokenCaCertHash(), k.getCertificateKey()),
+		JoinMaster: fmt.Sprintf(JoinMaster115Lower, k.master0, k.getJoinToken(), k.getTokenCaCertHash(), k.getCertificateKey()),
 		JoinNode:   fmt.Sprintf(JoinNode115Lower, k.getVIP(), k.getJoinToken(), k.getTokenCaCertHash()),
 	}
 
@@ -432,7 +436,7 @@ func (k *Runtime) deleteMaster(master net.IP) error {
 	if err != nil || !utilsnet.IsLocalIP(master, address) {
 		remoteCleanCmd = append(remoteCleanCmd, RemoveKubeConfig)
 	} else {
-		apiServerHost := getAPIServerHost(k.cluster.GetMaster0IP(), k.getAPIServerDomain())
+		apiServerHost := getAPIServerHost(k.master0, k.getAPIServerDomain())
 		remoteCleanCmd = append(remoteCleanCmd,
 			fmt.Sprintf(RemoteAddEtcHosts, apiServerHost, apiServerHost))
 	}
@@ -449,16 +453,16 @@ func (k *Runtime) deleteMaster(master net.IP) error {
 	}
 
 	if len(masterIPs) > 0 {
-		hostname, err := k.isHostName(k.cluster.GetMaster0IP(), master)
+		hostname, err := k.isHostName(k.master0, master)
 		if err != nil {
 			return err
 		}
-		master0SSH, err := k.getHostSSHClient(k.cluster.GetMaster0IP())
+		master0SSH, err := k.getHostSSHClient(k.master0)
 		if err != nil {
 			return fmt.Errorf("failed to get master0 ssh client: %v", err)
 		}
 
-		if err := master0SSH.CmdAsync(k.cluster.GetMaster0IP(), fmt.Sprintf(KubeDeleteNode, strings.TrimSpace(hostname))); err != nil {
+		if err := master0SSH.CmdAsync(k.master0, fmt.Sprintf(KubeDeleteNode, strings.TrimSpace(hostname))); err != nil {
 			return fmt.Errorf("failed to delete node %s: %v", hostname, err)
 		}
 	}
@@ -489,7 +493,7 @@ func (k *Runtime) GetJoinTokenHashAndKey() error {
 		[upload-certs] Using certificate key:
 		8376c70aaaf285b764b3c1a588740728aff493d7c2239684e84a7367c6a437cf
 	*/
-	output, err := k.CmdToString(k.cluster.GetMaster0IP(), cmd, "\r\n")
+	output, err := k.CmdToString(k.master0, cmd, "\r\n")
 	if err != nil {
 		return err
 	}
@@ -502,11 +506,11 @@ func (k *Runtime) GetJoinTokenHashAndKey() error {
 	k.CertificateKey = strings.Replace(key, "\n", "", -1)
 	cmd = fmt.Sprintf("kubeadm token create --print-join-command -v %d", k.Vlog)
 
-	ssh, err := k.getHostSSHClient(k.cluster.GetMaster0IP())
+	ssh, err := k.getHostSSHClient(k.master0)
 	if err != nil {
 		return fmt.Errorf("failed to get join token hash and key: %v", err)
 	}
-	out, err := ssh.Cmd(k.cluster.GetMaster0IP(), cmd)
+	out, err := ssh.Cmd(k.master0, cmd)
 	if err != nil {
 		return fmt.Errorf("failed to create kubeadm join token: %v", err)
 	}
